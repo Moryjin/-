@@ -1,0 +1,33 @@
+package com.example.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// Warm Literary Editorial Palette (Day)
+val RawiCreamBackground = Color(0xFFFAF6F0)
+val RawiPaperSurface = Color(0xFFF2ECE1)
+val RawiSurfaceVariant = Color(0xFFE6DDD0)
+val RawiBurgundyPrimary = Color(0xFF8C2D19)
+val RawiOnPrimary = Color(0xFFFFFFFF)
+val RawiPrimaryContainer = Color(0xFFFFDBD2)
+val RawiOnPrimaryContainer = Color(0xFF3A0A01)
+val RawiGoldSecondary = Color(0xFF9C722B)
+val RawiGoldAccent = Color(0xFFC89D54)
+val RawiSecondaryContainer = Color(0xFFF9E2B6)
+val RawiOnSecondaryContainer = Color(0xFF2E1F00)
+val RawiTealTertiary = Color(0xFF1B4965)
+val RawiInkText = Color(0xFF1F1A17)
+val RawiMutedInk = Color(0xFF5D534A)
+
+// Velvet Night Literary Palette (Dark)
+val RawiNightBackground = Color(0xFF0F141C)
+val RawiNightSurface = Color(0xFF18202C)
+val RawiNightSurfaceVariant = Color(0xFF232E3E)
+val RawiCoralPrimary = Color(0xFFE07A5F)
+val RawiNightOnPrimary = Color(0xFF3E1004)
+val RawiNightPrimaryContainer = Color(0xFF6B2211)
+val RawiNightOnPrimaryContainer = Color(0xFFFFDBD2)
+val RawiNightGoldSecondary = Color(0xFFE2BA73)
+val RawiNightSecondaryContainer = Color(0xFF4F380E)
+val RawiNightOnSecondaryContainer = Color(0xFFF9E2B6)
+val RawiNightText = Color(0xFFEAE4DC)
+val RawiNightMutedText = Color(0xFFB5ACA2)

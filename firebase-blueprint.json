@@ -1,0 +1,201 @@
+{
+  "entities": {
+    "Novel": {
+      "title": "Novel",
+      "description": "A published novel in Arabic or another world language with metadata, keywords, target audience, and aggregated multi-criteria ratings.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string", "description": "UID of the author." },
+        "authorName": { "type": "string", "description": "Display name of the author." },
+        "title": { "type": "string", "description": "Title of the novel." },
+        "synopsis": { "type": "string", "description": "Detailed synopsis of the novel." },
+        "originalLanguage": { "type": "string", "description": "Original language." },
+        "genre": { "type": "string", "description": "Literary genre." },
+        "targetAudience": { "type": "string", "description": "Target audience." },
+        "keywords": { "type": "array", "description": "List of up to 10 search keywords." },
+        "coverColorHex": { "type": "string", "description": "Hex color string." },
+        "chapterCount": { "type": "integer", "description": "Number of published chapters." },
+        "ratingCount": { "type": "integer", "description": "Total number of user reviews." },
+        "averageRating": { "type": "number", "description": "Overall weighted rating." },
+        "plotRatingAvg": { "type": "number", "description": "Average plot rating." },
+        "styleRatingAvg": { "type": "number", "description": "Average literary style rating." },
+        "charactersRatingAvg": { "type": "number", "description": "Average characters rating." },
+        "translationRatingAvg": { "type": "number", "description": "Average translation rating." },
+        "isCompleted": { "type": "boolean", "description": "Completion status." },
+        "visibility": { "type": "string", "enum": ["PUBLIC", "PRIVATE"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "authorId", "authorName", "title", "synopsis", "originalLanguage",
+        "genre", "targetAudience", "keywords", "coverColorHex", "chapterCount",
+        "ratingCount", "averageRating", "plotRatingAvg", "styleRatingAvg",
+        "charactersRatingAvg", "translationRatingAvg", "isCompleted",
+        "visibility", "createdAt", "updatedAt"
+      ]
+    },
+    "Chapter": {
+      "title": "Chapter",
+      "description": "A single chapter belonging to a novel.",
+      "type": "object",
+      "properties": {
+        "novelId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "chapterNumber": { "type": "integer" },
+        "title": { "type": "string" },
+        "paragraphs": { "type": "array" },
+        "language": { "type": "string" },
+        "wordCount": { "type": "integer" },
+        "visibility": { "type": "string", "enum": ["PUBLIC", "PRIVATE"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "novelId", "authorId", "chapterNumber", "title", "paragraphs",
+        "language", "wordCount", "visibility", "createdAt", "updatedAt"
+      ]
+    },
+    "ParagraphComment": {
+      "title": "ParagraphComment",
+      "description": "A side comment attached to a specific paragraph index inside a chapter.",
+      "type": "object",
+      "properties": {
+        "novelId": { "type": "string" },
+        "chapterId": { "type": "string" },
+        "paragraphIndex": { "type": "integer" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "commentText": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["PUBLIC"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "novelId", "chapterId", "paragraphIndex", "userId", "userName",
+        "commentText", "visibility", "createdAt", "updatedAt"
+      ]
+    },
+    "NovelReview": {
+      "title": "NovelReview",
+      "description": "A multi-criteria user rating and review for a novel.",
+      "type": "object",
+      "properties": {
+        "novelId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "plotRating": { "type": "integer" },
+        "styleRating": { "type": "integer" },
+        "charactersRating": { "type": "integer" },
+        "translationRating": { "type": "integer" },
+        "overallRating": { "type": "number" },
+        "reviewText": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["PUBLIC"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "novelId", "userId", "userName", "plotRating", "styleRating",
+        "charactersRating", "translationRating", "overallRating",
+        "reviewText", "visibility", "createdAt", "updatedAt"
+      ]
+    },
+    "FollowSubscription": {
+      "title": "FollowSubscription",
+      "description": "A user's personal follow/library subscription with custom notification preferences.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "targetId": { "type": "string" },
+        "targetType": { "type": "string", "enum": ["NOVEL", "AUTHOR", "READER"] },
+        "targetName": { "type": "string" },
+        "targetSubtitle": { "type": "string" },
+        "notificationsEnabled": { "type": "boolean" },
+        "lastKnownChapterCount": { "type": "integer" },
+        "readingStatus": { "type": "string", "enum": ["READING", "COMPLETED", "FAVORITE"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "targetId", "targetType", "targetName", "targetSubtitle",
+        "notificationsEnabled", "lastKnownChapterCount", "readingStatus",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "AuthorProfile": {
+      "title": "AuthorProfile",
+      "description": "An author profile with biography, specialty genres, and social media links.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "bio": { "type": "string" },
+        "specialtyGenres": { "type": "array" },
+        "websiteUrl": { "type": "string" },
+        "twitterHandle": { "type": "string" },
+        "instagramHandle": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["PUBLIC"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "authorId", "displayName", "bio", "specialtyGenres",
+        "websiteUrl", "twitterHandle", "instagramHandle",
+        "visibility", "createdAt", "updatedAt"
+      ]
+    },
+    "ReadingProgress": {
+      "title": "ReadingProgress",
+      "description": "Tracks a user's reading progress per novel including completed chapters and last read paragraph position.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "novelId": { "type": "string" },
+        "novelTitle": { "type": "string" },
+        "genre": { "type": "string" },
+        "lastReadChapterId": { "type": "string" },
+        "lastReadChapterNumber": { "type": "integer" },
+        "lastReadParagraphIndex": { "type": "integer" },
+        "completedChapterIds": { "type": "array" },
+        "totalChapters": { "type": "integer" },
+        "progressFraction": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "novelId", "novelTitle", "genre", "lastReadChapterId",
+        "lastReadChapterNumber", "lastReadParagraphIndex", "completedChapterIds",
+        "totalChapters", "progressFraction", "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/novels/{novelId}": {
+      "schema": { "$ref": "#/entities/Novel" },
+      "description": "Root collection of published novels."
+    },
+    "/chapters/{chapterId}": {
+      "schema": { "$ref": "#/entities/Chapter" },
+      "description": "Root collection of novel chapters."
+    },
+    "/paragraph_comments/{commentId}": {
+      "schema": { "$ref": "#/entities/ParagraphComment" },
+      "description": "Side comments attached to specific paragraphs of chapters."
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/NovelReview" },
+      "description": "Multi-criteria reviews and ratings for novels."
+    },
+    "/follows/{followId}": {
+      "schema": { "$ref": "#/entities/FollowSubscription" },
+      "description": "Per-user library subscriptions, followed readers/authors, and notification settings."
+    },
+    "/author_profiles/{profileId}": {
+      "schema": { "$ref": "#/entities/AuthorProfile" },
+      "description": "Author profiles with biography and social media links."
+    },
+    "/reading_progress/{progressId}": {
+      "schema": { "$ref": "#/entities/ReadingProgress" },
+      "description": "Per-user reading progress tracking across novels and chapters."
+    }
+  }
+}

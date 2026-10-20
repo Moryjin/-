@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="400dp"
+    android:height="225dp"
+    android:viewportWidth="400"
+    android:viewportHeight="225">
+    <path android:pathData="M0,0h400v225h-400z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="400"
+                android:endY="225"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#1D1118" />
+                <item android:offset="0.55" android:color="#4E160B" />
+                <item android:offset="1.0" android:color="#8C2D19" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Andalusian Arch Silhouettes -->
+    <path
+        android:fillColor="#18FFFFFF"
+        android:pathData="M30,225 L30,90 A50,50 0 0,1 130,90 L130,225 Z M150,225 L150,75 A50,50 0 0,1 250,75 L250,225 Z M270,225 L270,90 A50,50 0 0,1 370,90 L370,225 Z" />
+    <!-- Glowing Golden Lanterns -->
+    <path
+        android:fillColor="#44C89D54"
+        android:pathData="M80,65 m-26,0 a26,26 0 1,0 52,0 a26,26 0 1,0 -52,0" />
+    <path
+        android:fillColor="#FFE5A3"
+        android:pathData="M75,52 L85,52 L88,68 L80,76 L72,68 Z" />
+    <path
+        android:fillColor="#44C89D54"
+        android:pathData="M320,60 m-24,0 a24,24 0 1,0 48,0 a24,24 0 1,0 -48,0" />
+    <path
+        android:fillColor="#FFE5A3"
+        android:pathData="M315,48 L325,48 L328,64 L320,72 L312,64 Z" />
+    <!-- Center Open Illuminated Manuscript -->
+    <path
+        android:fillColor="#FAF6F0"
+        android:pathData="M200,115 C175,103 145,103 125,112 L125,180 C145,171 175,171 200,183 C225,171 255,171 275,180 L275,112 C255,103 225,103 200,115 Z" />
+    <path
+        android:fillColor="#C89D54"
+        android:pathData="M197,112 L203,112 L203,186 L197,186 Z" />
+    <!-- Golden Stars & Literary Sparkles -->
+    <path
+        android:fillColor="#C89D54"
+        android:pathData="M200,45 L204,57 L216,61 L204,65 L200,77 L196,65 L184,61 L196,57 Z" />
+    <path
+        android:fillColor="#E07A5F"
+        android:pathData="M140,128 L185,132 L185,136 L140,132 Z M140,142 L185,146 L185,150 L140,146 Z M215,132 L260,128 L260,132 L215,136 Z M215,146 L260,142 L260,146 L215,150 Z" />
+</vector>

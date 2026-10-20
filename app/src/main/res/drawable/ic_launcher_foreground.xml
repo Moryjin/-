@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Open Literary Book Pages Silhouette in Warm Cream & Gold -->
+    <path
+        android:fillColor="#FAF6F0"
+        android:pathData="M54,34 C44,29 31,29 24,33 L24,73 C31,69 44,69 54,74 C64,69 77,69 84,73 L84,33 C77,29 64,29 54,34 Z" />
+    <!-- Gold Spine & Nib Accent -->
+    <path
+        android:fillColor="#C89D54"
+        android:pathData="M52,32 L56,32 L56,76 L52,76 Z" />
+    <path
+        android:fillColor="#C89D54"
+        android:pathData="M54,20 L61,32 L54,29 L47,32 Z" />
+    <!-- Decorative Literary Lines on Pages -->
+    <path
+        android:fillColor="#8C2D19"
+        android:pathData="M30,43 L47,45 L47,48 L30,46 Z M30,51 L47,53 L47,56 L30,54 Z M30,59 L44,61 L44,64 L30,62 Z M61,45 L78,43 L78,46 L61,48 Z M61,53 L78,51 L78,54 L61,56 Z M64,61 L78,59 L78,62 L64,64 Z" />
+</vector>

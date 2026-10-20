@@ -1,0 +1,6 @@
+{
+  "name": "روي - Rawi",
+  "description": "منصة تفاعلية لنشر وقراءة الروايات العربية والعالمية مع الترجمة الفورية بالذكاء الاصطناعي، القراءة الصوتية المتعددة، التعليقات الجانبية للفقرات، والتحميل بدون إنترنت.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

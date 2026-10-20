@@ -1,0 +1,517 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    // 2. Entity Validation Helpers
+    function isValidNovel(data) {
+      return data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 &&
+             data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 100 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.synopsis is string && data.synopsis.size() >= 1 && data.synopsis.size() <= 4000 &&
+             data.originalLanguage is string && data.originalLanguage.size() >= 1 && data.originalLanguage.size() <= 50 &&
+             data.genre is string && data.genre.size() >= 1 && data.genre.size() <= 60 &&
+             data.targetAudience is string && data.targetAudience.size() >= 1 && data.targetAudience.size() <= 60 &&
+             data.keywords is list && data.keywords.size() <= 10 &&
+             (data.keywords.size() == 0 || (data.keywords[0] is string && data.keywords[0].size() <= 50)) &&
+             data.coverColorHex is string && data.coverColorHex.size() >= 4 && data.coverColorHex.size() <= 16 &&
+             data.chapterCount is int && data.chapterCount >= 0 && data.chapterCount <= 10000 &&
+             data.ratingCount is int && data.ratingCount >= 0 && data.ratingCount <= 1000000 &&
+             (data.averageRating is int || data.averageRating is float) && data.averageRating >= 0 && data.averageRating <= 5 &&
+             (data.plotRatingAvg is int || data.plotRatingAvg is float) && data.plotRatingAvg >= 0 && data.plotRatingAvg <= 5 &&
+             (data.styleRatingAvg is int || data.styleRatingAvg is float) && data.styleRatingAvg >= 0 && data.styleRatingAvg <= 5 &&
+             (data.charactersRatingAvg is int || data.charactersRatingAvg is float) && data.charactersRatingAvg >= 0 && data.charactersRatingAvg <= 5 &&
+             (data.translationRatingAvg is int || data.translationRatingAvg is float) && data.translationRatingAvg >= 0 && data.translationRatingAvg <= 5 &&
+             data.isCompleted is bool &&
+             data.visibility in ['PUBLIC', 'PRIVATE'];
+    }
+
+    function isValidChapter(data) {
+      return isValidId(data.novelId) &&
+             data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 &&
+             data.chapterNumber is int && data.chapterNumber >= 1 && data.chapterNumber <= 10000 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.paragraphs is list && data.paragraphs.size() >= 1 && data.paragraphs.size() <= 60 &&
+             data.paragraphs[0] is string && data.paragraphs[0].size() >= 1 && data.paragraphs[0].size() <= 5000 &&
+             data.language is string && data.language.size() >= 1 && data.language.size() <= 50 &&
+             data.wordCount is int && data.wordCount >= 0 && data.wordCount <= 100000 &&
+             data.visibility in ['PUBLIC', 'PRIVATE'];
+    }
+
+    function isValidParagraphComment(data) {
+      return isValidId(data.novelId) &&
+             isValidId(data.chapterId) &&
+             data.paragraphIndex is int && data.paragraphIndex >= 0 && data.paragraphIndex <= 500 &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 100 &&
+             data.commentText is string && data.commentText.size() >= 1 && data.commentText.size() <= 1500 &&
+             data.visibility == 'PUBLIC';
+    }
+
+    function isValidNovelReview(data) {
+      return isValidId(data.novelId) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 100 &&
+             data.plotRating is int && data.plotRating >= 1 && data.plotRating <= 5 &&
+             data.styleRating is int && data.styleRating >= 1 && data.styleRating <= 5 &&
+             data.charactersRating is int && data.charactersRating >= 1 && data.charactersRating <= 5 &&
+             data.translationRating is int && data.translationRating >= 1 && data.translationRating <= 5 &&
+             (data.overallRating is int || data.overallRating is float) && data.overallRating >= 1 && data.overallRating <= 5 &&
+             data.reviewText is string && data.reviewText.size() >= 1 && data.reviewText.size() <= 2500 &&
+             data.visibility == 'PUBLIC';
+    }
+
+    function isValidFollowSubscription(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidId(data.targetId) &&
+             data.targetType in ['NOVEL', 'AUTHOR', 'READER', 'GROUP'] &&
+             data.targetName is string && data.targetName.size() >= 1 && data.targetName.size() <= 200 &&
+             data.targetSubtitle is string && data.targetSubtitle.size() <= 300 &&
+             data.notificationsEnabled is bool &&
+             data.lastKnownChapterCount is int && data.lastKnownChapterCount >= 0 && data.lastKnownChapterCount <= 10000 &&
+             data.readingStatus in ['READING', 'COMPLETED', 'FAVORITE'];
+    }
+
+    function isValidAuthorProfile(data) {
+      return data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+             data.bio is string && data.bio.size() >= 1 && data.bio.size() <= 2000 &&
+             data.specialtyGenres is list && data.specialtyGenres.size() <= 10 &&
+             (data.specialtyGenres.size() == 0 || (data.specialtyGenres[0] is string && data.specialtyGenres[0].size() <= 60)) &&
+             data.websiteUrl is string && data.websiteUrl.size() <= 300 &&
+             data.twitterHandle is string && data.twitterHandle.size() <= 100 &&
+             data.instagramHandle is string && data.instagramHandle.size() <= 100 &&
+             data.visibility == 'PUBLIC';
+    }
+
+    function isValidReadingProgress(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidId(data.novelId) &&
+             data.novelTitle is string && data.novelTitle.size() >= 1 && data.novelTitle.size() <= 200 &&
+             data.genre is string && data.genre.size() >= 1 && data.genre.size() <= 60 &&
+             data.lastReadChapterId is string && data.lastReadChapterId.size() <= 128 &&
+             data.lastReadChapterNumber is int && data.lastReadChapterNumber >= 1 && data.lastReadChapterNumber <= 10000 &&
+             data.lastReadParagraphIndex is int && data.lastReadParagraphIndex >= 0 && data.lastReadParagraphIndex <= 1000 &&
+             data.completedChapterIds is list && data.completedChapterIds.size() <= 100 &&
+             (data.completedChapterIds.size() == 0 || (data.completedChapterIds[0] is string && data.completedChapterIds[0].size() <= 128)) &&
+             data.totalChapters is int && data.totalChapters >= 1 && data.totalChapters <= 10000 &&
+             (data.progressFraction is int || data.progressFraction is float) &&
+             data.progressFraction >= 0 && data.progressFraction <= 1;
+    }
+
+    function isValidDiscussionGroup(data) {
+      return data.novelId is string && data.novelId.size() <= 128 &&
+             data.novelTitle is string && data.novelTitle.size() <= 200 &&
+             data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 &&
+             data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 100 &&
+             data.groupTitle is string && data.groupTitle.size() >= 1 && data.groupTitle.size() <= 200 &&
+             data.description is string && data.description.size() >= 1 && data.description.size() <= 2000 &&
+             data.genre is string && data.genre.size() >= 1 && data.genre.size() <= 60 &&
+             data.memberCount is int && data.memberCount >= 1 && data.memberCount <= 1000000 &&
+             data.visibility == 'PUBLIC';
+    }
+
+    function isValidCommunityPost(data) {
+      return data.groupId is string && data.groupId.size() >= 1 && data.groupId.size() <= 128 &&
+             data.novelId is string && data.novelId.size() <= 128 &&
+             data.novelTitle is string && data.novelTitle.size() <= 200 &&
+             data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 &&
+             data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 100 &&
+             data.authorRole in ['مؤلف', 'قارئ'] &&
+             data.postType in ['AUTHOR_UPDATE', 'QA_QUESTION', 'GROUP_DISCUSSION'] &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 3000 &&
+             data.authorAnswer is string && data.authorAnswer.size() <= 3000 &&
+             data.answeredByName is string && data.answeredByName.size() <= 100 &&
+             data.likesCount is int && data.likesCount >= 0 && data.likesCount <= 1000000 &&
+             data.visibility == 'PUBLIC';
+    }
+
+    // 3. Collection Rules
+
+    // NOVELS
+    match /novels/{novelId} {
+      allow get: if isSignedIn() && isValidId(novelId) &&
+                    (existing().visibility == 'PUBLIC' || existing().authorId == request.auth.uid);
+      allow list: if isSignedIn() &&
+                     (existing().visibility == 'PUBLIC' || existing().authorId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(novelId) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'authorId', 'authorName', 'title', 'synopsis', 'originalLanguage',
+                         'genre', 'targetAudience', 'keywords', 'coverColorHex', 'chapterCount',
+                         'ratingCount', 'averageRating', 'plotRatingAvg', 'styleRatingAvg',
+                         'charactersRatingAvg', 'translationRatingAvg', 'isCompleted',
+                         'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'authorId', 'authorName', 'title', 'synopsis', 'originalLanguage',
+                         'genre', 'targetAudience', 'keywords', 'coverColorHex', 'chapterCount',
+                         'ratingCount', 'averageRating', 'plotRatingAvg', 'styleRatingAvg',
+                         'charactersRatingAvg', 'translationRatingAvg', 'isCompleted',
+                         'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidNovel(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(novelId) &&
+                       isValidNovel(incoming()) &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       (
+                         (existing().authorId == request.auth.uid &&
+                          incoming().diff(existing()).affectedKeys().hasOnly([
+                            'title', 'synopsis', 'originalLanguage', 'genre', 'targetAudience',
+                            'keywords', 'coverColorHex', 'chapterCount', 'isCompleted',
+                            'visibility', 'updatedAt'
+                          ])) ||
+                         (incoming().diff(existing()).affectedKeys().hasOnly([
+                            'ratingCount', 'averageRating', 'plotRatingAvg', 'styleRatingAvg',
+                            'charactersRatingAvg', 'translationRatingAvg', 'updatedAt'
+                          ]))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(novelId) && existing().authorId == request.auth.uid;
+    }
+
+    // CHAPTERS
+    match /chapters/{chapterId} {
+      allow get: if isSignedIn() && isValidId(chapterId) &&
+                    (existing().visibility == 'PUBLIC' || existing().authorId == request.auth.uid);
+      allow list: if isSignedIn() &&
+                     (existing().visibility == 'PUBLIC' || existing().authorId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(chapterId) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'novelId', 'authorId', 'chapterNumber', 'title', 'paragraphs',
+                         'language', 'wordCount', 'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'novelId', 'authorId', 'chapterNumber', 'title', 'paragraphs',
+                         'language', 'wordCount', 'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidChapter(incoming()) &&
+                       exists(/databases/$(database)/documents/novels/$(incoming().novelId)) &&
+                       get(/databases/$(database)/documents/novels/$(incoming().novelId)).data.authorId == request.auth.uid;
+
+      allow update: if isSignedIn() &&
+                       isValidId(chapterId) &&
+                       isValidChapter(incoming()) &&
+                       existing().authorId == request.auth.uid &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().novelId == existing().novelId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'chapterNumber', 'title', 'paragraphs', 'language',
+                         'wordCount', 'visibility', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(chapterId) && existing().authorId == request.auth.uid;
+    }
+
+    // PARAGRAPH COMMENTS
+    match /paragraph_comments/{commentId} {
+      allow get: if isSignedIn() && isValidId(commentId) &&
+                    (existing().visibility == 'PUBLIC' || existing().userId == request.auth.uid);
+      allow list: if isSignedIn() &&
+                     (existing().visibility == 'PUBLIC' || existing().userId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(commentId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'novelId', 'chapterId', 'paragraphIndex', 'userId', 'userName',
+                         'commentText', 'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'novelId', 'chapterId', 'paragraphIndex', 'userId', 'userName',
+                         'commentText', 'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidParagraphComment(incoming()) &&
+                       exists(/databases/$(database)/documents/chapters/$(incoming().chapterId));
+
+      allow update: if isSignedIn() &&
+                       isValidId(commentId) &&
+                       isValidParagraphComment(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().novelId == existing().novelId &&
+                       incoming().chapterId == existing().chapterId &&
+                       incoming().paragraphIndex == existing().paragraphIndex &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['commentText', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(commentId) && existing().userId == request.auth.uid;
+    }
+
+    // NOVEL REVIEWS
+    match /reviews/{reviewId} {
+      allow get: if isSignedIn() && isValidId(reviewId) &&
+                    (existing().visibility == 'PUBLIC' || existing().userId == request.auth.uid);
+      allow list: if isSignedIn() &&
+                     (existing().visibility == 'PUBLIC' || existing().userId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(reviewId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'novelId', 'userId', 'userName', 'plotRating', 'styleRating',
+                         'charactersRating', 'translationRating', 'overallRating',
+                         'reviewText', 'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'novelId', 'userId', 'userName', 'plotRating', 'styleRating',
+                         'charactersRating', 'translationRating', 'overallRating',
+                         'reviewText', 'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidNovelReview(incoming()) &&
+                       exists(/databases/$(database)/documents/novels/$(incoming().novelId));
+
+      allow update: if isSignedIn() &&
+                       isValidId(reviewId) &&
+                       isValidNovelReview(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().novelId == existing().novelId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'plotRating', 'styleRating', 'charactersRating',
+                         'translationRating', 'overallRating', 'reviewText', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(reviewId) && existing().userId == request.auth.uid;
+    }
+
+    // FOLLOWS & CUSTOM NOTIFICATIONS
+    match /follows/{followId} {
+      allow get: if isSignedIn() && isValidId(followId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(followId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'targetId', 'targetType', 'targetName', 'targetSubtitle',
+                         'notificationsEnabled', 'lastKnownChapterCount', 'readingStatus',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'targetId', 'targetType', 'targetName', 'targetSubtitle',
+                         'notificationsEnabled', 'lastKnownChapterCount', 'readingStatus',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidFollowSubscription(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(followId) &&
+                       isValidFollowSubscription(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().targetId == existing().targetId &&
+                       incoming().targetType == existing().targetType &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'targetName', 'targetSubtitle', 'notificationsEnabled',
+                         'lastKnownChapterCount', 'readingStatus', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(followId) && existing().userId == request.auth.uid;
+    }
+
+    // AUTHOR PROFILES (Biography, Published Works & Social Links)
+    match /author_profiles/{profileId} {
+      allow get: if isSignedIn() && isValidId(profileId) &&
+                    (existing().visibility == 'PUBLIC' || existing().authorId == request.auth.uid);
+      allow list: if isSignedIn() &&
+                     (existing().visibility == 'PUBLIC' || existing().authorId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(profileId) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'authorId', 'displayName', 'bio', 'specialtyGenres',
+                         'websiteUrl', 'twitterHandle', 'instagramHandle',
+                         'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'authorId', 'displayName', 'bio', 'specialtyGenres',
+                         'websiteUrl', 'twitterHandle', 'instagramHandle',
+                         'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidAuthorProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(profileId) &&
+                       isValidAuthorProfile(incoming()) &&
+                       existing().authorId == request.auth.uid &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'displayName', 'bio', 'specialtyGenres',
+                         'websiteUrl', 'twitterHandle', 'instagramHandle',
+                         'visibility', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(profileId) && existing().authorId == request.auth.uid;
+    }
+
+    // READING PROGRESS (Strictly Per-User Isolated)
+    match /reading_progress/{progressId} {
+      allow get: if isSignedIn() && isValidId(progressId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(progressId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'novelId', 'novelTitle', 'genre', 'lastReadChapterId',
+                         'lastReadChapterNumber', 'lastReadParagraphIndex',
+                         'completedChapterIds', 'totalChapters', 'progressFraction',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'novelId', 'novelTitle', 'genre', 'lastReadChapterId',
+                         'lastReadChapterNumber', 'lastReadParagraphIndex',
+                         'completedChapterIds', 'totalChapters', 'progressFraction',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidReadingProgress(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(progressId) &&
+                       isValidReadingProgress(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().novelId == existing().novelId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'novelTitle', 'genre', 'lastReadChapterId',
+                         'lastReadChapterNumber', 'lastReadParagraphIndex',
+                         'completedChapterIds', 'totalChapters', 'progressFraction',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(progressId) && existing().userId == request.auth.uid;
+    }
+
+    // DISCUSSION GROUPS (Novel Clubs Created by Authors)
+    match /discussion_groups/{groupId} {
+      allow get: if isSignedIn() && isValidId(groupId) && existing().visibility == 'PUBLIC';
+      allow list: if isSignedIn() && existing().visibility == 'PUBLIC';
+
+      allow create: if isSignedIn() &&
+                       isValidId(groupId) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'novelId', 'novelTitle', 'authorId', 'authorName',
+                         'groupTitle', 'description', 'genre', 'memberCount',
+                         'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'novelId', 'novelTitle', 'authorId', 'authorName',
+                         'groupTitle', 'description', 'genre', 'memberCount',
+                         'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidDiscussionGroup(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(groupId) &&
+                       isValidDiscussionGroup(incoming()) &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'groupTitle', 'description', 'memberCount', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(groupId) && existing().authorId == request.auth.uid;
+    }
+
+    // COMMUNITY POSTS (Author Updates, Q&A Questions & Answers, Group Discussions)
+    match /community_posts/{postId} {
+      allow get: if isSignedIn() && isValidId(postId) && existing().visibility == 'PUBLIC';
+      allow list: if isSignedIn() && existing().visibility == 'PUBLIC';
+
+      allow create: if isSignedIn() &&
+                       isValidId(postId) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'groupId', 'novelId', 'novelTitle', 'authorId', 'authorName',
+                         'authorRole', 'postType', 'content', 'authorAnswer',
+                         'answeredByName', 'likesCount', 'visibility',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'groupId', 'novelId', 'novelTitle', 'authorId', 'authorName',
+                         'authorRole', 'postType', 'content', 'authorAnswer',
+                         'answeredByName', 'likesCount', 'visibility',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidCommunityPost(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(postId) &&
+                       isValidCommunityPost(incoming()) &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'content', 'authorAnswer', 'answeredByName', 'likesCount', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(postId) && existing().authorId == request.auth.uid;
+    }
+  }
+}
